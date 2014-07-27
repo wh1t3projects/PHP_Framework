@@ -17,7 +17,7 @@ Copyright 2014 Gaël Stébenne (alias Wh1t3c0d3r)
    limitations under the License.
 */
 DEFINE ('INSCRIPT',"1");
-DEFINE ('framework_version','1.0 BETA');
+DEFINE ('framework_version','1.0.1 BETA');
 require 'config.php'; // Config file
 if ($CONFIG['debug'] === true) {error_reporting(E_ALL);}
 else {error_reporting(0);}
@@ -33,10 +33,10 @@ $THEME['module']	= $THEME["location"]."/".$CONFIG['themes_mod']."/";
 // Config file auto-test
 $error = false;
 $error_array = array();
-if (!file_exists($CONFIG['webroot'])) {$error = true; array_push($error_array,'webroot');}
-if (!file_exists($CONFIG['themes'])) {$error = true; array_push($error_array,'themes');}
 if (!file_exists($CONFIG['app_real_location'])) {$error = true; array_push($error_array,'app_real_location');}
-if (!file_exists($CONFIG['modules'])) {$error = true; array_push($error_array,'modules');}
+if (!file_exists($CONFIG['app_real_location'].'/'.$CONFIG['webroot'])) {$error = true; array_push($error_array,'webroot');}
+if (!file_exists($CONFIG['app_real_location'].'/'.$CONFIG['themes'])) {$error = true; array_push($error_array,'themes');}
+if (!file_exists($CONFIG['app_real_location'].'/'.$CONFIG['modules'])) {$error = true; array_push($error_array,'modules');}
 
 if ($error === true) {header('HTTP/1.1 500 Internal Server Error');
     echo "CONFIG FILE TEST FAILED! Failed check(s):<br/><br/>\r\n\r\n"; 
@@ -194,18 +194,5 @@ else{
 	}
 }
 
-kernel_log("Shutting down...");
-kernel_event_trigger("SHUTDOWN");
-kernel_log("HALT");
-// Save kernel log if debug is enabled
-if ($CONFIG['debug'] === TRUE) {
-		$LOG = kernel_log();
-		$file = $CONFIG['app_real_location'].$CONFIG['debug_file'];
-		if (is_writable($file) or ! file_exists($file)) {
-			file_put_contents("$file",$LOG,FILE_APPEND);
-		} else {
-			echo "WARNING: Debug is enabled but cannot write to log. Please check file permissions.\r\n"; } 
-}
-
-
+kernel_shutdown();
 ?>

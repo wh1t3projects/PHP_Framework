@@ -33,6 +33,7 @@ $CONFIG['sql_pass']			= '';
 $CONFIG['sql_host']			= '';
 $CONFIG['sql_db']			= '';
 $CONFIG['sql_drv']			= '';
+$CONFIG['sql_prefix']		= "prefix_";
 $CONFIG['app_location'] 	= '/';
 $CONFIG['app_real_location']= '';
 $CONFIG['default_document'] = 'index';

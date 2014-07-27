@@ -141,7 +141,22 @@ function kernel_log($var1 = null,$var2 = null) {
 	if ($var2 == 1) {$GLOBALS['CONFIG']['debug_level'] = 4; echo $text; kernel_panic();}
 	
 }
+function kernel_shutdown($exitcode = null) {
+    kernel_log("Shutting down...");
+    kernel_event_trigger("SHUTDOWN");
+    kernel_log("HALT");
 
+    // Save kernel log if debug is enabled
+    if ($GLOBALS['CONFIG']['debug'] === TRUE) {
+			$LOG = kernel_log();
+			$file = $GLOBALS['CONFIG']['app_real_location'].$GLOBALS['CONFIG']['debug_file'];
+			if (is_writable($file) or ! file_exists($file)) {
+				file_put_contents("$file",$LOG,FILE_APPEND);
+			} else {
+				echo "WARNING: Debug is enabled but cannot write to log. Please check file permissions.\r\n"; } 
+	}
+	exit($exitcode);
+}
 kernel_log(framework_version." booting");
 require_once 'protected/init.php';
 require_once 'event_handler/init.php';

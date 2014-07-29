@@ -75,7 +75,7 @@ function SQL_query($var1, $var2 = null){
 	$return = null;
 	$result = mysqli_query($sql_ses_id,$var1);
 	if (mysqli_error($sql_ses_id) != "") {kernel_log("An error as occurred while executing the query: $var1. The error was: ". mysqli_error($sql_ses_id),3); return;
-	} else {if (gettype($result) === "object") {$return = mysqli_fetch_array($result);} else { $return = $result;} }
+	} else {if (gettype($result) === "object") {$return = array(); while ($result_array = mysqli_fetch_array($result)) {array_push($return,$result_array);}} else { $return = $result;} }
 	return($return);
 }
 function SQL_select($var1, $var2, $var3 = null){

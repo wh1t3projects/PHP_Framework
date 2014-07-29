@@ -17,7 +17,7 @@ Copyright 2014 Gaël Stébenne (alias Wh1t3c0d3r)
    limitations under the License.
 */
 DEFINE ('INSCRIPT',"1");
-DEFINE ('framework_version','1.0.1 BETA');
+DEFINE ('framework_version','1.0.2 BETA');
 require 'config.php'; // Config file
 if ($CONFIG['debug'] === true) {error_reporting(E_ALL);}
 else {error_reporting(0);}

@@ -21,7 +21,7 @@ $TEMP['callinfo'] = debug_backtrace();
 $TEMP['file'] = $TEMP['callinfo'][0]['file'];
 if (! $TEMP['file'] === $GLOBALS['CONFIG']['app_real_location']."/Kernel/sql/init.php") { kernel_log("Illegal attempt to load MySQLi driver",1); exit(1);}
 
-kernel_protected_var("sql_ses_id",null);
+kernel_protected_var("sql_ses_id",false);
 
 function SQL_connect($var1 = null, $var2 = null, $var3 = null, $var4 = null, $var5 = null){
 	/* VAR definition

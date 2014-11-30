@@ -16,9 +16,13 @@ Copyright 2014 Gaël Stébenne (alias Wh1t3c0d3r)
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+
+
 DEFINE ('INSCRIPT',"1");
-DEFINE ('framework_version','1.0.2 BETA');
-require 'config.php'; // Config file
+DEFINE ('framework_version','1.1 BETA');
+ob_start();
+if (file_exists('config.php')) {require_once 'config.php';} else {echo 'Can\'t find config.php. Please run <a href="setup.php">setup.php</a>';exit(1);} // Config file
+error_reporting(E_ALL);
 if ($CONFIG['debug'] === true) {error_reporting(E_ALL);}
 else {error_reporting(0);}
 session_start();
@@ -37,10 +41,11 @@ if (!file_exists($CONFIG['app_real_location'])) {$error = true; array_push($erro
 if (!file_exists($CONFIG['app_real_location'].'/'.$CONFIG['webroot'])) {$error = true; array_push($error_array,'webroot');}
 if (!file_exists($CONFIG['app_real_location'].'/'.$CONFIG['themes'])) {$error = true; array_push($error_array,'themes');}
 if (!file_exists($CONFIG['app_real_location'].'/'.$CONFIG['modules'])) {$error = true; array_push($error_array,'modules');}
-
+if ($CONFIG['app_location'] != substr($_SERVER['REQUEST_URI'],0,strlen($CONFIG['app_location']))) {$error = true; array_push($error_array,'app_location');}
+if (substr($CONFIG['app_location'],-1,1) != '/') {$error = true; array_push($error_array,'app_location');}
 if ($error === true) {header('HTTP/1.1 500 Internal Server Error');
     echo "CONFIG FILE TEST FAILED! Failed check(s):<br/><br/>\r\n\r\n"; 
-    echo "-- The following settings are using non-existing folders --<br/>\r\n";
+    echo "-- The following settings are using non-existing folders or bad values --<br/>\r\n";
     foreach ($error_array as $item) {echo $item."<br/>\r\n";} exit(1);
 }
 unset ($error);
@@ -75,13 +80,20 @@ chdir ($CONFIG['app_real_location']."/".$CONFIG['webroot']);
 kernel_vartemp_clear();
 
 $INFO['web_location'] = $_SERVER['REQUEST_URI']; // Set current web location
+
 //$INFO['web_location'] = "/framework/"; // Uncomment to override web-location USEFULL WHEN DUBUGGING THROUGHT THE CONSOLE!!
 
 // Filter WEB URL and find docpath
 if (strpos($INFO['web_location'],"?") !== false) {$INFO['web_location'] = substr($INFO['web_location'], 0, strpos($INFO['web_location'],"?"));}
-$TEMP['regex_app_location'] = str_replace("/","\\/",$CONFIG['app_location']);
-preg_match('/(?<='.$TEMP['regex_app_location'].').*/',$INFO['web_location'],$TEMP['docpath']); // Get the URL of the web location (with app_location as root)
-$TEMP['docpath'] = $TEMP['docpath'][0];
+if ($CONFIG['app_location'] === '/') {
+	$TEMP['docpath'] = $INFO['web_location'];
+} else { 	
+	$TEMP['regex_app_location'] = str_replace("/","\\/",$CONFIG['app_location']); 
+	preg_match('/(?<='.$TEMP['regex_app_location'].').*/',$INFO['web_location'],$TEMP['docpath']); // Get the URL of the web location (with app_location as root)
+	$TEMP['docpath'] = $TEMP['docpath'][0];
+	
+}
+
 // If at root, make sure that there is a slash.
 if ($TEMP['docpath'] !== "/") {
 	if ($TEMP['docpath'] == "") {
@@ -91,11 +103,10 @@ if ($TEMP['docpath'] !== "/") {
 	}
 }
 kernel_log("WEB-URL: ". $TEMP['docpath']);
-$TEMP['render_page'] = false;
 $i = kernel_override_url();
 while (true) {
 	static $i2 = 0;
-	if (! isset ($i['TYPE'][$i2])) {$TEMP['render_page'] = true; unset ($i); break;}
+	if (! isset ($i['TYPE'][$i2])) {__render_page(); unset ($i); break;}
 		if ($i['TYPE'][$i2] === 2) {
 			if ($TEMP['docpath'] === $i['URL'][$i2]) {kernel_log("Executing script ".$i['SCRIPTNAME'][$i2]." with URL ".$i['URL'][$i2]." using explicit mode"); include_once $i['SCRIPT'][$i2]; unset ($i); break;}
 		} elseif($i['TYPE'][$i2] === 1) {
@@ -103,48 +114,70 @@ while (true) {
 		}
 	$i2++;
 }
-if ($TEMP['render_page'] === true) { 
-	unset ($TEMP['render_page']);
+
+function __render_page () {
 	include ("docname.inc.php");
 
-	if ($TEMP['docpath'] == "/" and file_exists('./'.$CONFIG['default_document'].'.html')) {
-		define ('DOCPATH',"/".$CONFIG['default_document']);
+	if ($GLOBALS['TEMP']['docpath'] == "/" and file_exists('./'.$GLOBALS['CONFIG']['default_document'].'.html')) {
+		define ('DOCPATH',"/".$GLOBALS['CONFIG']['default_document']);
 		
-		$THEME['page_title'] = $DOCNAME[$CONFIG['default_document']];
+		$GLOBALS['THEME']['page_title'] = $DOCNAME[$GLOBALS['CONFIG']['default_document']];
 		kernel_log("Sent DEFAULT document");
-	} elseif (file_exists(".".$TEMP['docpath'].'.html')) {
-		define ('DOCPATH',$TEMP['docpath']);
+	} elseif (file_exists(".".$GLOBALS['TEMP']['docpath'].'.html')) {
+		define ('DOCPATH',$GLOBALS['TEMP']['docpath']);
 
-		$THEME['page_title'] = $DOCNAME[substr(DOCPATH,1)];
+		$GLOBALS['THEME']['page_title'] = $DOCNAME[substr(DOCPATH,1)];
 		kernel_log("Sent document '". DOCPATH ."'");
 
-	} elseif (file_exists(".".$TEMP['docpath']) and is_dir(".".$TEMP['docpath']) and file_exists(".".$TEMP['docpath'].'/'.$CONFIG['default_document'].'.html')) {
-        define ('DOCPATH',$TEMP['docpath'].'/'.$CONFIG['default_document']);
+	} elseif (file_exists(".".$GLOBALS['TEMP']['docpath']) and is_dir(".".$GLOBALS['TEMP']['docpath']) and file_exists(".".$GLOBALS['TEMP']['docpath'].'/'.$GLOBALS['CONFIG']['default_document'].'.html')) {
+        define ('DOCPATH',$GLOBALS['TEMP']['docpath'].'/'.$GLOBALS['CONFIG']['default_document']);
         
-        $THEME['page_title'] = $DOCNAME[substr(DOCPATH,1)];
+        $GLOBALS['THEME']['page_title'] = $DOCNAME[substr(DOCPATH,1)];
         kernel_log("Sent DEFAULT document for ".DOCPATH);
     } else {
-        $file = $TEMP['docpath'];
+        $file = $GLOBALS['TEMP']['docpath'];
         $fileext = strrchr($file,'.');
-        if ($fileext !== false and substr($file,1,1) != "." and strlen($fileext) >= 2 and !preg_match('/(\!|"|\$|%|\?|&|\*|\(|\)|;|:|\^|<|>|`|´|\'|\+\=|,|«|»|{|}|\[|\]|¯|­)/i',$file)) {
-            foreach ($CONFIG['allowed_file_ext'] as $ext) {
-                if ($fileext == '.'.$ext and file_exists('.'.$file)){ 
-                    if ($CONFIG['debug'] === true and $CONFIG['debug_level'] !== 0){kernel_log("DEBUG IS ENABLED and debug_level is not set to zero. File download is not possible in that case. Please disable debug or set debug_level to 0",2); unset ($fileext); break;
-                    } else { $TEMP['IS_DOWNLOAD'] = true; kernel_log("Download of file '$file' requested"); unset($fileext); break;
-                           }
-                }
-            }
-        }
-        if (!isset ($TEMP['IS_DOWNLOAD'])) {
-            
-            if (file_exists("./404.html")) {
+        
+        if ($fileext !== false and substr($file,1,1) != "." and strlen($fileext) >= 3) {
+            foreach ($GLOBALS['CONFIG']['allowed_file_ext'] as $ext) {
                 
-                kernel_log ("File ". $TEMP['docpath'] ." not found. Sent 404",4);
-                define('DOCPATH','/404'); 
-                header("HTTP/1.0 404 Not Found");
-                $THEME['page_title'] = $DOCNAME[substr(DOCPATH,1)];
-            } else {
-                define('DOCPATH','404'); 
+                if ($fileext == '.'.$ext and file_exists($file)){
+                    if ($GLOBALS['CONFIG']['debug'] === true and $GLOBALS['CONFIG']['debug_level'] !== 0){kernel_log("DEBUG IS ENABLED and debug_level is not set to zero. File download is not possible in that case. Please disable debug or set debug_level to 0",2); unset ($fileext); break;
+                    } else { 
+						kernel_log("Download of file '$file' requested");
+                        unset($fileext);
+						$finfo = finfo_open(FILEINFO_MIME_TYPE); // return mime type
+						$mimetype = finfo_file($finfo, $GLOBALS['TEMP']['docpath']);
+						finfo_close($finfo);
+                        ob_end_clean();ob_end_clean();
+						header('Content-Type: $mimetype');
+						header('Content-Length: ' . filesize($GLOBALS['TEMP']['docpath']));
+						kernel_log ('Download of file '.$GLOBALS['TEMP']['docpath'].' started. File size: '.filesize($GLOBALS['TEMP']['docpath']).' Bytes');
+						readfile ($GLOBALS['TEMP']['docpath']);
+						kernel_log ('Download completed');
+						kernel_shutdown();
+                    }
+				}
+            }
+            if (file_exists('./404.html')){DEFINE('DOCPATH','/404');} else {DEFINE('DOCPATH','404');}
+        } else {
+			if (file_exists('./404.html')){DEFINE('DOCPATH','/404');} else {DEFINE('DOCPATH','404');}
+		}
+	}
+		if (DEFINED ('DOCPATH') and DOCPATH !== '404') {
+			if (DOCPATH === '/404') {kernel_log ("File ". $GLOBALS['TEMP']['docpath'] ." not found. Sent 404",4);}
+			kernel_vartemp_clear();
+			kernel_event_trigger("STARTUP");
+			$GLOBALS['THEME']['page_title'] = $DOCNAME[substr(DOCPATH,1)];
+			include_once ($GLOBALS['THEME']['location']."/functions.php");
+			include_once ($GLOBALS['THEME']['location']."/header.php");
+			kernel_event_trigger('SHOWHEADER');
+			include_once(".". DOCPATH .".html");
+			kernel_event_trigger('SHOWCONTENT');
+			include_once ($GLOBALS['THEME']['location'].'/footer.php');
+			kernel_event_trigger('SHOWFOOTER');
+        } elseif (DEFINED ('DOCPATH') and DOCPATH === '404') {
+                kernel_log ("File ". $GLOBALS['TEMP']['docpath'] ." not found. Sent 404",4);
                 header("HTTP/1.0 404 Not Found");
             echo <<<OUT
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
@@ -153,7 +186,7 @@ if ($TEMP['render_page'] === true) {
 </head><body>
 <h1>Not Found</h1>
 OUT;
-            echo "<p>The requested URL ". $CONFIG['app_location'].$TEMP['docpath'] ." was not found on this server.</p>";
+            echo "<p>The requested URL ". $_SERVER['REQUEST_URI'] ." was not found on this server.</p>";
             echo <<<OUT
 <p>Additionally, a 404 Not found error as occurred while trying to find the 404 document</p>
 <hr/>
@@ -162,37 +195,11 @@ echo '<p style="font-style:italic;">Generated by Wh1t3project\'s Pure PHP framew
 </body></html>';
 
             }
-	   }
-    }
-}
-        if (isset ($TEMP['IS_DOWNLOAD'])) {
-            $finfo = finfo_open(FILEINFO_MIME_TYPE); // return mime type ala mimetype extension
-            $mimetype = finfo_file($finfo, '.'.$TEMP['docpath']);
-            finfo_close($finfo);
-            header('Content-Type: $mimetype');
-            header('Content-Length: ' . filesize('.'.$TEMP['docpath']));
-            kernel_log ('Download of file '.$TEMP['docpath'].' started. File size: '.filesize('.'.$TEMP['docpath']).' Bytes');
-            readfile ('.'.$TEMP['docpath']);
-            kernel_log ('Download completed');
             
-}
-else{
+	
 
-            
-	kernel_vartemp_clear();
-	// System is ready and all modules are initialized. Booting up and loading content.
-	if (DOCPATH !== '404') {
-		kernel_event_trigger("STARTUP");
-		kernel_log('Using theme \''.$CONFIG['theme'].'\'');
-		include_once ($THEME['location']."/functions.php");
-		include_once ($THEME['location']."/header.php");
-		kernel_event_trigger('SHOWHEADER');
-		include_once(".". DOCPATH .".html");
-		kernel_event_trigger('SHOWCONTENT');
-		include_once ($THEME['location'].'/footer.php');
-		kernel_event_trigger('SHOWFOOTER');
-	}
 }
 
 kernel_shutdown();
 ?>
+

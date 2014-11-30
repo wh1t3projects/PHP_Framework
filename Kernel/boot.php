@@ -37,7 +37,7 @@ function kernel_date($var1 = null) {
 	} else { return (date($var1));}
 }
 function kernel_panic() {
-	kernel_log("(PANIC) KERNEL PANIC RAISED!!! WRITING LOG AND EXITING!");
+	kernel_log("(PANIC) KERNEL PANIC TRIGGERED! WRITING LOG AND EXITING!");
 	ob_start();
 	debug_print_backtrace();
 	$stack = ob_get_clean();
@@ -59,17 +59,17 @@ function kernel_log($var1 = null,$var2 = null) {
 /* LOG LEVEL /*
 	5: Normal
 	4: Warning
-	3: Critical
+	3: Critical (function may crash)
 	2: Fatal (module may crash)
 	1: Panic (Kernel will crash, log will be written to panic.log even if debug is disabled.)
 */
 	$callinfo = debug_backtrace();
-    
 	$file = $callinfo[0]['file'];
 	$prefix = null;
 	$prefix2 = null;
 	$file = str_replace ("\\","/",$file); // Convert Windows-style path to Unix-style so we can use it
 	static $LOG = array();
+    static $warnedFilePermissions = false;
 	
 	
 	// Determine who is calling the function and set its name as a prefix
@@ -118,6 +118,15 @@ function kernel_log($var1 = null,$var2 = null) {
 		}
 		$text = "[".kernel_date()."] $prefix $prefix2$var1\r\n";
 		array_push($LOG,$text);
+		$file = $GLOBALS['CONFIG']['app_real_location'].$GLOBALS['CONFIG']['debug_file'];
+		if ($GLOBALS['CONFIG']['debug'] === TRUE) {
+            if (is_writable($file) or ! file_exists($file)) {
+                file_put_contents($file,$text,FILE_APPEND);
+            } elseif ($warnedFilePermissions !== true) {
+                echo "WARNING: Debug is enabled but cannot write to log. Please check file permissions.\r\n";
+                $warnedFilePermissions = true;
+            }
+        }
 		if ($GLOBALS['CONFIG']['debug'] == TRUE){ // What are we going to send to the browser?
 		
 			switch ($var2) {
@@ -144,20 +153,17 @@ function kernel_log($var1 = null,$var2 = null) {
 function kernel_shutdown($exitcode = null) {
     kernel_log("Shutting down...");
     kernel_event_trigger("SHUTDOWN");
-    kernel_log("HALT");
-
-    // Save kernel log if debug is enabled
-    if ($GLOBALS['CONFIG']['debug'] === TRUE) {
-			$LOG = kernel_log();
-			$file = $GLOBALS['CONFIG']['app_real_location'].$GLOBALS['CONFIG']['debug_file'];
-			if (is_writable($file) or ! file_exists($file)) {
-				file_put_contents("$file",$LOG,FILE_APPEND);
-			} else {
-				echo "WARNING: Debug is enabled but cannot write to log. Please check file permissions.\r\n"; } 
-	}
+    kernel_log("HALT\r\n");
+	
 	exit($exitcode);
 }
+function kernel_php_error_handler($errno,$errstr,$errfile,$errline){
+    kernel_log("PHP ERROR $errno: \"$errstr\" in $errfile at line $errline",4);
+    if ($GLOBALS['CONFIG']['debug'] === true) {echo '<div style="display:inline-block;background-color:#FFE5E5;border: solid 2px #AA0114;padding:8px;color:#AA0114;text-align: center;margin:5px;">An error occured:</br>'.$errstr.'</div>';}
+    return true ;
+}
 kernel_log(framework_version." booting");
+set_error_handler("kernel_php_error_handler");
 require_once 'protected/init.php';
 require_once 'event_handler/init.php';
 require_once 'override/init.php';

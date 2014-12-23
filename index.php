@@ -90,7 +90,7 @@ if ($CONFIG['app_location'] === '/') {
 } else { 	
 	$TEMP['regex_app_location'] = str_replace("/","\\/",$CONFIG['app_location']); 
 	preg_match('/(?<='.$TEMP['regex_app_location'].').*/',$INFO['web_location'],$TEMP['docpath']); // Get the URL of the web location (with app_location as root)
-	$TEMP['docpath'] = $TEMP['docpath'][0];
+	$TEMP['docpath'] = '/'.$TEMP['docpath'][0];
 	
 }
 
@@ -126,13 +126,21 @@ function __render_page () {
 	} elseif (file_exists(".".$GLOBALS['TEMP']['docpath'].'.html')) {
 		define ('DOCPATH',$GLOBALS['TEMP']['docpath']);
 
-		$GLOBALS['THEME']['page_title'] = $DOCNAME[substr(DOCPATH,1)];
+		if (! isset($DOCNAME[substr(DOCPATH,1)])) {
+		    $GLOBALS['THEME']['page_title'] = $GLOBALS['INFO']['web_location'];
+		} else {
+		    $GLOBALS['THEME']['page_title'] = $DOCNAME[substr(DOCPATH,1)];
+		}
 		kernel_log("Sent document '". DOCPATH ."'");
 
 	} elseif (file_exists(".".$GLOBALS['TEMP']['docpath']) and is_dir(".".$GLOBALS['TEMP']['docpath']) and file_exists(".".$GLOBALS['TEMP']['docpath'].'/'.$GLOBALS['CONFIG']['default_document'].'.html')) {
         define ('DOCPATH',$GLOBALS['TEMP']['docpath'].'/'.$GLOBALS['CONFIG']['default_document']);
         
-        $GLOBALS['THEME']['page_title'] = $DOCNAME[substr(DOCPATH,1)];
+	        if (! isset($DOCNAME[substr(DOCPATH,1)])) {
+			    $GLOBALS['THEME']['page_title'] = $GLOBALS['INFO']['web_location'];
+			} else {
+			    $GLOBALS['THEME']['page_title'] = $DOCNAME[substr(DOCPATH,1)];
+		}
         kernel_log("Sent DEFAULT document for ".DOCPATH);
     } else {
         $file = $GLOBALS['TEMP']['docpath'];
@@ -168,7 +176,6 @@ function __render_page () {
 			if (DOCPATH === '/404') {kernel_log ("File ". $GLOBALS['TEMP']['docpath'] ." not found. Sent 404",4);}
 			kernel_vartemp_clear();
 			kernel_event_trigger("STARTUP");
-			$GLOBALS['THEME']['page_title'] = $DOCNAME[substr(DOCPATH,1)];
 			include_once ($GLOBALS['THEME']['location']."/functions.php");
 			include_once ($GLOBALS['THEME']['location']."/header.php");
 			kernel_event_trigger('SHOWHEADER');

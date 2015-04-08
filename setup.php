@@ -19,12 +19,57 @@ Copyright 2014 Gaël Stébenne (alias Wh1t3c0d3r)
 error_reporting(E_ALL);
 session_start();
 if (isset ($_GET['close'])) {@unlink ("setup.active") or die ("No open session <a href='setup.php'>Start new session</a>"); session_destroy(); echo "Session closed. <a href='setup.php'>Start new session</a>"; exit(); }
-if (file_exists('config.php')){ echo "A configuration file already exist. If you want to re-run this configuration wizard, please delete it or rename it";exit(1);}
+if (file_exists('config.php')){ echo "A configuration file already exist.\r\nIf you want to re-run this configuration wizard, please delete it or rename it\r\n";exit(1);}
 if (file_exists('setup.active')) { $sesid = file_get_contents('setup.active');}
 if (isset ($sesid) and $sesid !== session_id() or isset ($_SESSION['ip']) and $_SESSION['ip'] !== $_SERVER['REMOTE_ADDR']) {
     echo "Setup is already running. If you want to restart the setup session, please delete the file 'setup.active'";
-}
-else{
+} elseif (php_sapi_name() === 'cli') { // If ran from command line (used to setup a service or when we want to use the functions from a commande line)
+    $DEFAULT_CONFIG['webroot'] = 'webroot';
+    $DEFAULT_CONFIG['themes'] = 'themes';
+    $DEFAULT_CONFIG['themes_css'] = 'css';
+    $DEFAULT_CONFIG['themes_js'] = 'js';
+    $DEFAULT_CONFIG['themes_img'] = 'img';
+    $DEFAULT_CONFIG['themes_mod'] = 'modules';
+    $DEFAULT_CONFIG['modules'] = 'modules';
+    $DEFAULT_CONFIG['sql_user'] = '';
+    $DEFAULT_CONFIG['sql_pass'] = '';
+    $DEFAULT_CONFIG['sql_host'] = '';
+    $DEFAULT_CONFIG['sql_db'] = '';
+    $DEFAULT_CONFIG['sql_prefix'] = 'prefix_';
+    $DEFAULT_CONFIG['sql_drv'] = 'mysqli';
+    $DEFAULT_CONFIG['app_location'] = '/';
+    $DEFAULT_CONFIG['app_real_location'] = getcwd();
+    $DEFAULT_CONFIG['default_document'] = 'index';
+    $DEFAULT_CONFIG['theme'] = 'default';
+    $DEFAULT_CONFIG['lang'] = 'en';
+    $DEFAULT_CONFIG['timezone'] = date_default_timezone_get();
+    $DEFAULT_CONFIG['allowed_file_ext'] = '';
+    $DEFAULT_CONFIG['debug'] = "true";
+    $DEFAULT_CONFIG['debug_file'] = '/debug.log';
+    $DEFAULT_CONFIG['debug_level'] = "4";
+    $DEFAULT_CONFIG['debug_panic'] = "true";
+    $config = "<?php
+if (! DEFINED('INSCRIPT')) {echo 'Direct access denied'; exit(1);}\r\n";
+                foreach($DEFAULT_CONFIG as $key=>$item) {
+                    if ($key === 'debug' or $key === 'debug_panic' or $key === 'debug_level') {
+                        $config .= "\$CONFIG['$key'] = $item;\r\n";
+                    } elseif ($key === 'allowed_file_ext') {
+                        $item = explode(';',$item);
+                        $config .= "\$CONFIG['$key'] = array(";
+                        foreach ($item as $item2) {
+                            $config .= "'$item2',";
+                        }
+                        $config = substr($config, 0, -1).");\r\n";
+                    } else {
+                    $config .= "\$CONFIG['$key'] = '$item';\r\n";            
+                    }
+                }
+                $config .= '?>';
+        if (file_put_contents('config.php',$config) === false){
+            die( 'An error as occured while saving the configuration. Please check the permissions and try again');
+        }
+        echo "The coonfiguration file has been created with the default values.\r\nPlease check it to make sure everything is OK\r\n";
+} else {
 
     echo <<<HEAD
         <html lang="en">

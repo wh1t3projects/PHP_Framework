@@ -90,6 +90,9 @@ function kernel_log($var1 = null,$var2 = null) {
 			$prefix = "KERNEL_".strtoupper($module[0]);
 		} elseif (strpos ($file,$GLOBALS['CONFIG']['app_real_location']."/".$GLOBALS['CONFIG']['themes']) === 0) {
 			$prefix = $GLOBALS['CONFIG']['theme']." THEME";
+		} elseif (php_sapi_name() === 'cli') {
+		// Called from command line
+		    $prefix = 'CLI';
 		} else {
 		// At this point, only the WebRoot folder remains.
 			$prefix = DOCPATH .".html";
@@ -159,7 +162,12 @@ function kernel_shutdown($exitcode = null) {
 }
 function kernel_php_error_handler($errno,$errstr,$errfile,$errline){
     kernel_log("PHP ERROR $errno: \"$errstr\" in $errfile at line $errline",4);
-    if ($GLOBALS['CONFIG']['debug'] === true) {echo '<div style="display:inline-block;background-color:#FFE5E5;border: solid 2px #AA0114;padding:8px;color:#AA0114;text-align: center;margin:5px;">An error occured:</br>'.$errstr.'</div>';}
+    if ($GLOBALS['CONFIG']['debug'] === true) {
+        if (php_sapi_name() === 'cli') {
+            echo $errstr;
+        } else {
+            echo '<div style="display:inline-block;background-color:#FFE5E5;border: solid 2px #AA0114;padding:8px;color:#AA0114;text-align: center;margin:5px;">An error occured:</br>'.$errstr.'</div>';}
+        }
     return true ;
 }
 kernel_log(framework_version." booting");

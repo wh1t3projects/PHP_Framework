@@ -175,7 +175,7 @@ function __render_page () {
     						$filesize = filesize(substr($file,1));
                             ob_end_clean();ob_end_clean();
     						header('Content-Type: $mimetype');
-    						header('Content-Length: $filesize' );
+    						header("Content-Length: $filesize");
     						kernel_log ('Download of file '.substr($file,1)." started. File size: $filesize Bytes");
     						readfile (substr($file,1));
     						kernel_log ('Download completed');

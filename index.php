@@ -163,19 +163,21 @@ function __render_page () {
             if ($fileext !== false and substr($file,1,1) != "." and strlen($fileext) >= 3) {
                 foreach ($GLOBALS['CONFIG']['allowed_file_ext'] as $ext) {
                     
-                    if ($fileext == '.'.$ext and file_exists($file)){
+                    if ($fileext == '.'.$ext and file_exists(substr($file,1))){
+                        
                         if ($GLOBALS['CONFIG']['debug'] === true and $GLOBALS['CONFIG']['debug_level'] !== 0){kernel_log("DEBUG IS ENABLED and debug_level is not set to zero. File download is not possible in that case. Please disable debug or set debug_level to 0",2); unset ($fileext); break;
                         } else { 
     						kernel_log("Download of file '$file' requested");
                             unset($fileext);
     						$finfo = finfo_open(FILEINFO_MIME_TYPE); // return mime type
-    						$mimetype = finfo_file($finfo, $GLOBALS['TEMP']['docpath']);
+    						$mimetype = finfo_file($finfo, substr($file,1));
     						finfo_close($finfo);
+    						$filesize = filesize(substr($file,1));
                             ob_end_clean();ob_end_clean();
     						header('Content-Type: $mimetype');
-    						header('Content-Length: ' . filesize($GLOBALS['TEMP']['docpath']));
-    						kernel_log ('Download of file '.$GLOBALS['TEMP']['docpath'].' started. File size: '.filesize($GLOBALS['TEMP']['docpath']).' Bytes');
-    						readfile ($GLOBALS['TEMP']['docpath']);
+    						header('Content-Length: $filesize' );
+    						kernel_log ('Download of file '.substr($file,1)." started. File size: $filesize Bytes");
+    						readfile (substr($file,1));
     						kernel_log ('Download completed');
     						kernel_shutdown();
                         }

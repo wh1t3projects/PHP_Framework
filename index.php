@@ -19,7 +19,7 @@ Copyright 2014 Gaël Stébenne (alias Wh1t3c0d3r)
 
 
 DEFINE ('INSCRIPT',"1");
-DEFINE ('framework_version','1.2.1 BETA');
+DEFINE ('framework_version','1.2.2 BETA');
 ob_start();
 if (file_exists('config.php')) {require_once 'config.php';} else {echo 'Can\'t find config.php. Please run <a href="setup.php">setup.php</a>';exit(1);} // Config file
 error_reporting(E_ALL);

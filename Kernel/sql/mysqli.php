@@ -83,7 +83,7 @@ function SQL_select($var1, $var2, $var3 = null){
 	if (gettype($var1) != "string" or gettype($var2) != "string") { kernel_log("Invalid argument type for 'SQL_select'",3);return;}
 	$return = null;
 	
-	$query = "SELECT ".$var1." FROM ".$var2;
+	$query = "SELECT $var1 FROM {$GLOBALS['CONFIG']['sql_prefix']}$var2";
 	if ($var3 != null) {$query .= " ".$var3;}
 	$result = SQL_query ($query);
 	if ($result === null) { kernel_log ("Error while executing SELECT query. Please check log for details",3); return;} else { $return = $result;}
@@ -95,7 +95,7 @@ function SQL_insert($var1, $var2, $var3){
 	if (gettype($var2) != "array" or gettype($var3) != "array") { kernel_log("Invalid argument type provided for 'SQL_insert'");return;}
 	$return = null;
 	
-	$query = "INSERT INTO ".$var1." (";
+	$query = "INSERT INTO {$GLOBALS['CONFIG']['sql_prefix']}$var1 (";
 	foreach ($var2 as $item) { $query .= "`$item`,"; }
 	$query = substr($query,0,-1).") VALUES (";
 	foreach ($var3 as $item) { $query .= "\"$item\","; }
@@ -126,7 +126,7 @@ function SQL_update ($var1,$var2,$var3,$var4,$var5,$var6 = null){
 	if (gettype($var1) != "string" or gettype($var2) != "string" or gettype($var3) != "string" or gettype($var4) != "string" or gettype($var5) != "string") { kernel_log("Invalid argument type for 'SQL_update'",3);return;}
 	$return = null;
 	
-	$query = "UPDATE $var1 SET $var2=$var3 WHERE $var4=$var5";
+	$query = "UPDATE {$GLOBALS['CONFIG']['sql_prefix']}$var1 SET $var2=$var3 WHERE $var4=$var5";
 	if ($var6 != null) {$query .= " $var6";}
 	$return = sql_query($query);
 	return $return;
@@ -137,7 +137,7 @@ function SQL_delete($var1,$var2,$var3,$var4 = null){
 	if ($var4 != null and gettype($var4) != "string") {kernel_log("Invalid argument type for 'SQL_delete'",3);return;}
 	$return = null;
 	
-	$query = "DELETE FROM $var1 WHERE `$var2`='$var3'";
+	$query = "DELETE FROM {$GLOBALS['CONFIG']['sql_prefix']}$var1 WHERE `$var2`='$var3'";
 	if ($var4 != null) {$query .= " ".$var4;}
 	
 	$return = sql_query($query);
@@ -148,7 +148,7 @@ function SQL_drop_table ($var1){
 	if (gettype($var1) != "string") { kernel_log("Invalid argument type for 'SQL_drop_table'",3);return;}
 	$return = null;
 	
-	$query = "DROP TABLE $var1";
+	$query = "DROP TABLE {$GLOBALS['CONFIG']['sql_prefix']}$var1";
 	$return = sql_query($query);
 	return $return;
 }

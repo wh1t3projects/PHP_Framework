@@ -2,7 +2,7 @@
 // Setup file. 
 /* Used for first-time use. Allow users to easly configure the framework.
 
-Copyright 2014 Gaël Stébenne (alias Wh1t3c0d3r)
+Copyright 2014 - 2015 Gaël Stébenne (alias Wh1t3c0d3r)
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ if (isset ($sesid) and $sesid !== session_id() or isset ($_SESSION['ip']) and $_
     $DEFAULT_CONFIG['themes_js'] = 'js';
     $DEFAULT_CONFIG['themes_img'] = 'img';
     $DEFAULT_CONFIG['themes_mod'] = 'modules';
+    $DEFAULT_CONFIG['themes_fromWebroot'] = 'theme';
     $DEFAULT_CONFIG['modules'] = 'modules';
     $DEFAULT_CONFIG['sql_user'] = '';
     $DEFAULT_CONFIG['sql_pass'] = '';
@@ -258,6 +259,7 @@ HEAD;
             $_SESSION['themes_js'] = 'js';
             $_SESSION['themes_img'] = 'img';
             $_SESSION['themes_mod'] = 'modules';
+            $_SESSION['themes_fromWebroot'] = 'theme';
             $_SESSION['modules'] = 'modules';
             $_SESSION['sql_user'] = '';
             $_SESSION['sql_pass'] = '';
@@ -342,7 +344,6 @@ if (! DEFINED('INSCRIPT')) {echo 'Direct access denied'; exit(1);}\r\n";
 ErrorDocument 403 /'.$_SESSION['app_location'].'index.php
 ErrorDocument 404 /'.$_SESSION['app_location'].'index.php
 RewriteEngine On
-RewriteCond %{REQUEST_URI} !.themes/.*$ [NC]
 RewriteRule ^(.*) index.php';
                 
                 if (file_put_contents('config.php',$config) === false){
@@ -457,7 +458,7 @@ echo '        </select><em>Those are the currently available drivers. If you wan
                 </fieldset>
                   <fieldset>
                     <legend>Theme</legend>
-                    <center><div class="warning">Those folders are relative to the \'themes\' folder setting</div></center>
+                    <center><div class="warning">Those folders are relative to the \'themes\' folder setting except the last one</div></center>
                     <table>
                         <tr>
                             <td class="right">What is the folder that hold the css files?</td>
@@ -474,6 +475,10 @@ echo '        </select><em>Those are the currently available drivers. If you wan
                         <tr>
                             <td class="right">What is the folder that hold the modules theme files?</td>
                             <td><input name="themes_mod" type="text" class="input" value="'.$_SESSION['themes_mod'].'"></td>
+                        </tr>
+                        <tr>
+                            <td class="right">What is the public folder that refer to the theme?</td>
+                            <td><input name="themes_fromWebroot" type="text" class="input" value="'.$_SESSION['themes_fromWebroot'].'"></td>
                         </tr>
                     </table>
                 </fieldset>

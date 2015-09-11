@@ -2,7 +2,7 @@
 // Kernel "override" module
 /* Small library for overriding how the framework work.
  
-Copyright 2014 Gaël Stébenne (alias Wh1t3c0d3r)
+Copyright 2014 - 2015 Gaël Stébenne (alias Wh1t3c0d3r)
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.

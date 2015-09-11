@@ -2,7 +2,7 @@
 // Kernel bootloader. 
 /* Load all kernel modules
 
-Copyright 2014 Gaël Stébenne (alias Wh1t3c0d3r)
+Copyright 2014 - 2015 Gaël Stébenne (alias Wh1t3c0d3r)
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -170,6 +170,17 @@ function kernel_php_error_handler($errno,$errstr,$errfile,$errline){
         }
     return true ;
 }
+function kernel_checkIfModuleIsValid ($moduleName) {
+    if (file_exists($GLOBALS['CONFIG']['app_real_location'].'/'.$GLOBALS['CONFIG']['modules']."/$moduleName/init.php") and is_readable($GLOBALS['CONFIG']['app_real_location']."/".$GLOBALS['CONFIG']['modules']."/$moduleName/init.php")){
+        return true;
+    } else {
+        return false;
+    }
+}
+function kernel_checkIfModuleExist($moduleName) { // Alias of kernel_checkIfModuleIsValid
+    return kernel_checkIfModuleIsValid($moduleName);
+}
+
 kernel_log(framework_version." booting");
 set_error_handler("kernel_php_error_handler");
 require_once 'protected/init.php';

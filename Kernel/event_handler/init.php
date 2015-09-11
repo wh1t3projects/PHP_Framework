@@ -2,7 +2,7 @@
 // Kernel "event_handler " module.
 /* Handle all the system events in the framework.
  
-Copyright 2014 Gaël Stébenne (alias Wh1t3c0d3r)
+Copyright 2014 - 2015 Gaël Stébenne (alias Wh1t3c0d3r)
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -21,11 +21,13 @@ if (! DEFINED('INSCRIPT')) {echo 'Direct access denied'; exit(1);}
 /* Depencies:
 - Log
 */
-$EVENTS['STARTUP'] 		= array(); // On boot after init
-$EVENTS['SHOWHEADER'] 	= array(); // Header loaded
-$EVENTS['SHOWCONTENT'] 	= array(); // Content loaded
-$EVENTS['SHOWFOOTER']	= array(); // Footer loaded
-$EVENTS['SHUTDOWN'] 	= array(); // Shutting down, useful when logging
+
+$EVENTS['MODULESLOADED']	= array(); // On boot after init
+$EVENTS['STARTUP'] 	    	= array(); // Before header
+$EVENTS['SHOWHEADER']   	= array(); // Header loaded
+$EVENTS['SHOWCONTENT'] 	    = array(); // Content loaded
+$EVENTS['SHOWFOOTER']	    = array(); // Footer loaded
+$EVENTS['SHUTDOWN'] 	    = array(); // Shutting down, useful when logging
 
 kernel_protected_var('kernel_event_ignored_functions',array(
 'return',

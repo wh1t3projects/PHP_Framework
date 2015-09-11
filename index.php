@@ -2,7 +2,7 @@
 // Index file. 
 /* Load kernel and modules, show content and take care of URL override
 
-Copyright 2014 Gaël Stébenne (alias Wh1t3c0d3r)
+Copyright 2014 - 2015 Gaël Stébenne (alias Wh1t3c0d3r)
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ Copyright 2014 Gaël Stébenne (alias Wh1t3c0d3r)
 
 
 DEFINE ('INSCRIPT',"1");
-DEFINE ('framework_version','1.2.2 BETA');
+DEFINE ('framework_version','1.3 BETA');
 ob_start();
 if (file_exists('config.php')) {require_once 'config.php';} else {echo 'Can\'t find config.php. Please run <a href="setup.php">setup.php</a>';exit(1);} // Config file
 error_reporting(E_ALL);
@@ -73,7 +73,7 @@ closedir($dirhandle);
 unset ($dirhandle);
 foreach ($TEMP['system']['moduletoload'] as $item) {
 	if (preg_match("/\/(system|kernel|theme|webroot|_|-)/i","/$item")){ break;} // If a module start with one of the name, exclude it. That prevent confusion in the log.
-	if (file_exists($CONFIG['app_real_location']."/".$CONFIG['modules']."/$item/init.php") and is_readable($CONFIG['app_real_location']."/".$CONFIG['modules']."/$item/init.php")) { 
+	if (kernel_checkIfModuleIsValid($item)) { 
 		kernel_log("Loading module '$item'..."); 
 		chdir ($CONFIG['app_real_location']."/".$CONFIG['modules']."/$item");
 		$result = include_once("init.php");
@@ -81,6 +81,7 @@ foreach ($TEMP['system']['moduletoload'] as $item) {
 		unset ($result);
 }}
 kernel_log("Done loading modules");
+kernel_event_trigger("MODULESLOADED");
 chdir ($CONFIG['app_real_location']."/".$CONFIG['webroot']);
 kernel_vartemp_clear();
 
@@ -89,8 +90,6 @@ if (php_sapi_name() === 'cli') {
 } else {
     $INFO['web_location'] = $_SERVER['REQUEST_URI']; // Set current web location
 }
-
-//$INFO['web_location'] = "/framework/"; // Uncomment to override web-location USEFULL WHEN DUBUGGING THROUGHT THE CONSOLE!!
 
 // Filter WEB URL and find docpath
 if ($INFO['web_location'] !== 'cli' and strpos($INFO['web_location'],"?") !== false) {$INFO['web_location'] = substr($INFO['web_location'], 0, strpos($INFO['web_location'],"?"));}
@@ -131,8 +130,37 @@ while (true) {
 function __render_page () {
     if (php_sapi_name() !== 'cli') {
     	include ("docname.inc.php");
-    
-    	if ($GLOBALS['TEMP']['docpath'] == "/" and file_exists('./'.$GLOBALS['CONFIG']['default_document'].'.html')) {
+    	if (strpos($GLOBALS['TEMP']['docpath'],$GLOBALS['CONFIG']['themes_fromWebroot'].'/') === 1) {
+    	    $destinationFile = $GLOBALS['CONFIG']['app_real_location'].'/'.$GLOBALS['THEME']['location'].'/'.substr($GLOBALS['TEMP']['docpath'],strlen($GLOBALS['CONFIG']['themes_fromWebroot'])+2);
+    	    if (strpos($GLOBALS['TEMP']['docpath'],$GLOBALS['CONFIG']['themes_fromWebroot'].'/') === 1) {
+        	    $destinationFile = $GLOBALS['CONFIG']['app_real_location'].'/'.$GLOBALS['THEME']['location'].'/'.substr($GLOBALS['TEMP']['docpath'],strlen($GLOBALS['CONFIG']['themes_fromWebroot'])+2);
+        	    if (strpos($destinationFile,'/.') === false and file_exists($destinationFile)) {
+        	        $finfo = finfo_open(FILEINFO_MIME_TYPE); // return mime type
+        			$mimetype = finfo_file($finfo, $destinationFile);
+        			finfo_close($finfo);
+        			if (substr($mimetype,0,4) === 'text') {
+        			    $ext = pathinfo($destinationFile,PATHINFO_EXTENSION);
+        			    switch ($ext) {
+        			        case 'css':
+        			            $mimetype = 'text/css';
+        			            break;
+        			        case 'js' :
+        			            $mimetype = 'text/js';
+        			            break;
+        			    }
+        			    
+        			}
+        	        header("Content-Type: $mimetype");
+        	        include ($destinationFile);
+        	        define ('DOCPATH',$GLOBALS['TEMP']['docpath']);
+        	        kernel_log('Sent the theme file '.DOCPATH);
+        	    } else {
+        	        kernel_log('File '.substr($GLOBALS['TEMP']['docpath'],strlen($GLOBALS['CONFIG']['themes_fromWebroot'])+1).' not found in the current theme',4);
+        	        if (file_exists('./404.html')){DEFINE('DOCPATH','/404'); $GLOBALS['THEME']['page_title'] = $DOCNAME[404];} else {DEFINE('DOCPATH','404');}
+        	    }
+    	    }
+    	}
+    	elseif ($GLOBALS['TEMP']['docpath'] == "/" and file_exists('./'.$GLOBALS['CONFIG']['default_document'].'.html')) {
     		define ('DOCPATH',"/".$GLOBALS['CONFIG']['default_document']);
     		
     		$GLOBALS['THEME']['page_title'] = $DOCNAME[$GLOBALS['CONFIG']['default_document']];
@@ -183,15 +211,16 @@ function __render_page () {
                         }
     				}
                 }
-                if (file_exists('./404.html')){DEFINE('DOCPATH','/404');} else {DEFINE('DOCPATH','404');}
+                if (file_exists('./404.html')){DEFINE('DOCPATH','/404'); $GLOBALS['THEME']['page_title'] = $DOCNAME[404];} else {DEFINE('DOCPATH','404');}
             } else {
-    			if (file_exists('./404.html')){DEFINE('DOCPATH','/404');} else {DEFINE('DOCPATH','404');}
+    			if (file_exists('./404.html')){DEFINE('DOCPATH','/404'); $GLOBALS['THEME']['page_title'] = $DOCNAME[404];} else {DEFINE('DOCPATH','404');}
     		}
     	}
-    		if (DEFINED ('DOCPATH') and DOCPATH !== '404') {
+    		if (DEFINED ('DOCPATH') and DOCPATH !== '404' and strpos($GLOBALS['TEMP']['docpath'],$GLOBALS['CONFIG']['themes_fromWebroot'].'/') !== 1) {
     			if (DOCPATH === '/404') {kernel_log ("File ". $GLOBALS['TEMP']['docpath'] ." not found. Sent 404",4);}
     			kernel_vartemp_clear();
     			kernel_event_trigger("STARTUP");
+    			
     			include_once ($GLOBALS['THEME']['location']."/functions.php");
     			include_once ($GLOBALS['THEME']['location']."/header.php");
     			kernel_event_trigger('SHOWHEADER');
@@ -200,7 +229,7 @@ function __render_page () {
     			include_once ($GLOBALS['THEME']['location'].'/footer.php');
     			kernel_event_trigger('SHOWFOOTER');
             } elseif (DEFINED ('DOCPATH') and DOCPATH === '404') {
-                    kernel_log ("File ". $GLOBALS['TEMP']['docpath'] ." not found. Sent 404",4);
+                    kernel_log ("File ". $GLOBALS['TEMP']['docpath'] ." and 404 document not found. Sent 404 with built-in error page",4);
                     header("HTTP/1.0 404 Not Found");
                 echo <<<OUT
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
@@ -214,7 +243,7 @@ OUT;
 <p>Additionally, a 404 Not found error as occurred while trying to find the 404 document</p>
 <hr/>
 OUT;
-echo '<p style="font-style:italic;">Generated by Wh1t3project\'s Pure PHP framework V'.framework_version.'</p>
+echo '<p style="font-style:italic;">Generated by Wh1t3project\'s PHP framework V'.framework_version.'</p>
 </body></html>';
 
             }
@@ -238,4 +267,3 @@ echo '<p style="font-style:italic;">Generated by Wh1t3project\'s Pure PHP framew
 
 kernel_shutdown();
 ?>
-

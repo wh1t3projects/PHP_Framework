@@ -2,7 +2,7 @@
 // mysqli driver for SQL kernel module
 /* Handle request for SQL using mysqli PHP extension
 
-Copyright 2014 Gaël Stébenne (alias Wh1t3c0d3r)
+Copyright 2014 - 2015 Gaël Stébenne (alias Wh1t3c0d3r)
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -20,8 +20,9 @@ if (! DEFINED('INSCRIPT')) {echo 'Direct access denied'; exit(1);}
 $TEMP['callinfo'] = debug_backtrace();
 $TEMP['file'] = $TEMP['callinfo'][0]['file'];
 if (! $TEMP['file'] === $GLOBALS['CONFIG']['app_real_location']."/Kernel/sql/init.php") { kernel_log("Illegal attempt to load MySQLi driver",1); exit(1);}
+if (extension_loaded('mysqli') === false) { kernel_log('The MySQLi PHP extension is not installed/loaded. This SQL driver will not work',1); }
 
-kernel_protected_var("sql_ses_id",false);
+kernel_protected_var("sql_res_id",false);
 
 function SQL_connect($var1 = null, $var2 = null, $var3 = null, $var4 = null, $var5 = null){
 	/* VAR definition
@@ -34,47 +35,61 @@ function SQL_connect($var1 = null, $var2 = null, $var3 = null, $var4 = null, $va
 	$return = null;
 	if ($var1 != null) {
 		kernel_log("Attempting to connect to MySQL host '$var1' with user '$var2'");
-		$sql_ses_id = mysqli_connect($var1,$var2,$var3);
-		if ($sql_ses_id == null) { kernel_log("Error while connecting to MySQL:". mysqli_connect_error(),2); return;
+		$sql_res_id = mysqli_connect($var1,$var2,$var3);
+		if ($sql_res_id == null) { kernel_log("Error while connecting to MySQL:". mysqli_connect_error(),2); return;
 		} else { kernel_log ("Connected to MySQL. Connecting to database '$var4'...");}
-		mysqli_select_db($sql_ses_id,$var4);
-		mysqli_set_charset ($sql_ses_id,"utf8");
-		if (mysqli_error($sql_ses_id) != "") {mysqli_close ($sql_ses_id); kernel_log("Error while connecting to database: ". mysqli_error($sql_ses_id),2);
-		} else { kernel_log ("Connection successful. Ready to process query"); $return = $sql_ses_id; kernel_protected_var("sql_ses_id",$sql_ses_id);}
+		mysqli_select_db($sql_res_id,$var4);
+		mysqli_set_charset ($sql_res_id,"utf8");
+		if (mysqli_error($sql_res_id) != "") {mysqli_close ($sql_res_id); kernel_log("Error while connecting to database: ". mysqli_error($sql_res_id),2);
+		} else { kernel_log ("Connection successful. Ready to process query"); $return = $sql_res_id; SQL_resid($sql_res_id);}
 	} else {
 		kernel_log("Attempting to connect to MySQL host '".$GLOBALS['CONFIG']['sql_host']."' with user '".$GLOBALS['CONFIG']['sql_user']."'");
-		$sql_ses_id = mysqli_connect($GLOBALS['CONFIG']['sql_host'],$GLOBALS['CONFIG']['sql_user'],$GLOBALS['CONFIG']['sql_pass']);
-		if ($sql_ses_id == null) {kernel_log("Error while connecting to MySQL: ". mysqli_connect_error(),2); return;
+		$sql_res_id = mysqli_connect($GLOBALS['CONFIG']['sql_host'],$GLOBALS['CONFIG']['sql_user'],$GLOBALS['CONFIG']['sql_pass']);
+		if ($sql_res_id == null) {kernel_log("Error while connecting to MySQL: ". mysqli_connect_error(),2); return;
 		} else { kernel_log ("Connected to MySQL. Connecting to database '".$GLOBALS['CONFIG']['sql_db']."'...");}
-		mysqli_select_db($sql_ses_id,$GLOBALS['CONFIG']['sql_db']);
-		mysqli_set_charset ($sql_ses_id,"utf8");
-		$sql_error = mysqli_error($sql_ses_id);
-		if ($sql_error != "") {mysqli_close ($sql_ses_id); kernel_log("Error while connecting to database: $sql_error",2);
-		} else { kernel_log ("Connection successful. Ready to process query"); $return = $sql_ses_id; kernel_protected_var("sql_ses_id",$sql_ses_id);}
+		mysqli_select_db($sql_res_id,$GLOBALS['CONFIG']['sql_db']);
+		mysqli_set_charset ($sql_res_id,"utf8");
+		$sql_error = mysqli_error($sql_res_id);
+		if ($sql_error != "") {mysqli_close ($sql_res_id); kernel_log("Error while connecting to database: $sql_error",2);
+		} else { kernel_log ("Connection successful. Ready to process query"); $return = $sql_res_id; SQL_resid($sql_res_id);}
 		}
 	return($return);
 }
-function SQL_close($var1) {
-	if ($var1 == null) { kernel_log ("Missing argument when calling 'SQL_close'",3); return;}
-	if (mysqli_ping ($var1) === true) { mysqli_close($var1); } else { kernel_log("Attempt to close an SQL session with an invalid session ID or host is down"); return;}
+function SQL_close($var1 = null) {
+	if ($var1 == null) { if (($var1 = sql_resid()) === false) { kernel_log('Attempted to close a MySQL connection while no one exist (or was not set before)'); }}
+	if (SQL_status($var1)) { 
+	    mysqli_close($var1);
+	    if ($var1 === SQL_resid()) { SQL_resid(false); }
+	    return true;
+	} else { 
+	    kernel_log("Attempt to close an SQL session with an invalid ressource identifier or host is down"); 
+	    return false;
+	}
 	
 	return true;
 }
 function SQL_resid($var1 = null){
-	if ($var1 == null) { return(kernel_protected_var("sql_ses_id"));
+	if ($var1 == null) { return(kernel_protected_var("sql_res_id"));
 	} else {
-		if (mysqli_ping ($var1) === true) { kernel_protected_var("sql_ses_id",$var1); kernel_log ("New SQL resource ID set"); return true; } else { kernel_log ("Bad SQL resource ID given"); return false;}
+		if (SQL_status ($var1) === true) { kernel_protected_var("sql_res_id",$var1); kernel_log ("New SQL resource ID set"); return true; } else { kernel_log ("Bad SQL resource ID given"); return false;}
 	}
+}
+function SQL_sesid($var1 = null){ // Alias for backward compatibility
+    SQL_resid($var1);
+}
+function SQL_status ($var1 = null){
+    if ($var1 === null) { $var1 = SQL_resid();}
+    if ($var1 !== null) { return mysqli_ping($var1); } else { return false;}
 }
 function SQL_query($var1, $var2 = null){
 	if ($var1 == null) {kernel_log("Missing argument(s) for 'SQL_query'",3);return;}
 	if (gettype($var1) != "string") { kernel_log("Invalid argument type for 'SQL_query'",3);return;}
-	if ($var2 == null) {$sql_ses_id = kernel_protected_var("sql_ses_id");} else {$sql_ses_id = $var2;}
-	if ($sql_ses_id == null) { kernel_log ("No SQL resource ID specified",2); return;}
-	if (! mysqli_ping ($sql_ses_id) === true) { kernel_log("Attempt to use 'SQL_query' with an invalid SQL resource ID or host is down",3); return;}
+	if ($var2 == null) {$sql_res_id = kernel_protected_var("sql_res_id");} else {$sql_res_id = $var2;}
+	if ($sql_res_id == null) { kernel_log ("No SQL resource ID specified",2); return;}
+	if (! SQL_status ($sql_res_id) === true) { kernel_log("Attempt to use 'SQL_query' with an invalid SQL resource ID or host is down",3); return;}
 	$return = null;
-	$result = mysqli_query($sql_ses_id,$var1);
-	if (mysqli_error($sql_ses_id) != "") {kernel_log("An error as occurred while executing the query: $var1. The error was: ". mysqli_error($sql_ses_id),3); return;
+	$result = mysqli_query($sql_res_id,$var1);
+	if (mysqli_error($sql_res_id) != "") {kernel_log("An error as occurred while executing the query: $var1. The error was: ". mysqli_error($sql_res_id),3); return;
 	} else {if (gettype($result) === "object") {$return = array(); while ($result_array = mysqli_fetch_array($result)) {array_push($return,$result_array);}} else { $return = $result;} }
 	return($return);
 }

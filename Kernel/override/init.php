@@ -2,7 +2,7 @@
 // Kernel "override" module
 /* Small library for overriding how the framework work.
  
-Copyright 2014 - 2015 Gaël Stébenne (alias Wh1t3c0d3r)
+Copyright 2014 - 2019 Gaël Stébenne (alias Wh1t3c0d3r)
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -20,36 +20,51 @@ if (! DEFINED("INSCRIPT")) {echo "Direct access denied";exit(1);}
 
 
 
-function kernel_override_url ($var1 = null,$var2 = null,$var3 = 1){
-	// Var1: URL
-	// Var2: Full path to script from the root of the framework
-	// Var3: Normal(2) OR explicit(1) (Optional, Explicit by default)
-	$callinfo = debug_backtrace();
+function kernel_override_url ($URL = null, $pathToScript = null, $mode = 2){
+    $callinfo = debug_backtrace();
 	$file = $callinfo[0]['file'];
 	$file = str_replace ("\\","/",$file); 
-	static $DATA = array();
-	$script = $GLOBALS['CONFIG']['app_real_location'] .$var2;
-	if (! isset ($DATA['URL'])) { $DATA['URL'] = array(); }
-	if (! isset ($DATA['SCRIPT'])) { $DATA['SCRIPT'] = array(); }
-	if (! isset ($DATA['SCRIPTNAME'])) { $DATA['SCRIPTNAME'] = array(); }
-	if (! isset ($DATA['TYPE'])) { $DATA['TYPE'] = array(); }
-	
-	if ($file === $GLOBALS['CONFIG']['app_real_location']."/index.php") { return $DATA;}
-	if ($var1 == null or $var2 == null) {kernel_log ("Missing parameters when calling 'kernel_override_url'",3); return;}
-	
-
-	if (! is_readable($script)) {kernel_log("File '$var2' does not exist or is inaccessible",3); return;} // Check if script can be read
-	if ($var3 != 1 and $var3 != 2) {kernel_log("Invalid type '$var3'",3); return;}
-	if (stripos($var1,'/') !== 0) { $var1 = "/".$var1; }
-	if ($var1[strlen($var1) - 1] == "/") { $var1 = substr($var1,0,-1);} // Remove the last slash if there is one.
-	foreach ($DATA['URL'] as $i) { if ($var1 == $i) {kernel_log("Attempt to register an already registered URL '$i'. Request ignored.",3); return;} } // Check if URL is already registered
-	// Push the informations to the arrays
-	array_push($DATA['URL'],$var1);
-	array_push($DATA['SCRIPT'],$script);
-	array_push($DATA['TYPE'],$var3);
-	array_push($DATA['SCRIPTNAME'],$var2);
-	$log = "Script '$var2' registered with URL '$var1' using ";
-	switch ($var3) {
+    static $DATA = array();
+    if ($file === $GLOBALS['CONFIG']['app_real_location']."/index.php") { 
+        return $DATA;
+    }
+    if (gettype($URL) != 'string' or $URL == '' or gettype($pathToScript) != 'string' or $pathToScript == '') {
+        kernel_log('Missing argument for "kernel_override_url"', 3);
+        return false;
+    }
+	$script = $GLOBALS['CONFIG']['app_real_location'] . '/' . $GLOBALS['CONFIG']['modules'] . '/' . kernel_getCallerModule() . '/' . $pathToScript;
+	if (! isset ($DATA['URL'])) {
+        $DATA['URL'] = array();
+        $DATA['SCRIPT'] = array();
+        $DATA['SCRIPTNAME'] = array();
+        $DATA['TYPE'] = array();
+    }
+	if (! is_readable($script)) {
+        kernel_log("File '$pathToScript' does not exist or is inaccessible",3);
+        return false;
+    }
+	if ($mode != 1 and $mode != 2) {
+        kernel_log("Invalid type '$mode'",3);
+        return false;
+    }
+	if (stripos($URL,'/') !== 0) { 
+        $URL = "/".$URL;
+    }
+	if ($URL[strlen($URL) - 1] == "/") {
+        $URL = substr($URL,0,-1);
+    }
+	foreach ($DATA['URL'] as $i) {
+        if ($URL == $i) {
+            kernel_log("Attempt to register an already registered URL '$i'. Request ignored.", 3);
+            return false;
+        } 
+    } 
+	array_push($DATA['URL'], $URL);
+	array_push($DATA['SCRIPT'], $script);
+	array_push($DATA['TYPE'], $mode);
+	array_push($DATA['SCRIPTNAME'], $pathToScript);
+	$log = "Script '$pathToScript' registered with URL '$URL' using ";
+	switch ($mode) {
 		case 1:
 			$log .= "normal mode";
 			break;
@@ -60,7 +75,5 @@ function kernel_override_url ($var1 = null,$var2 = null,$var3 = 1){
 	kernel_log($log);
 	return true;
 }
-
-	
 kernel_log("Module ready");
 ?>

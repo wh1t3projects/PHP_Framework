@@ -2,7 +2,7 @@
 // Document name definition file. 
 /* Name definition of all document in webroot folder. Used by themes for defining the title of the requested page.
 
-Copyright 2014 - 2015 Gaël Stébenne (alias Wh1t3c0d3r)
+Copyright 2014 - 2019 Gaël Stébenne (alias Wh1t3c0d3r)
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -17,6 +17,6 @@ Copyright 2014 - 2015 Gaël Stébenne (alias Wh1t3c0d3r)
    limitations under the License.
 */
 if (! DEFINED('INSCRIPT')) {echo 'Direct access denied'; exit(1);}
-$DOCNAME['index'] = "Accueil";
-$DOCNAME['404']		= "404 - Page introuvable";
+$DOCNAME['index'] = "Home";
+$DOCNAME['404']		= "404 - Page not found";
 ?>

@@ -2,7 +2,7 @@
 // SQL driver loader
 /* Load the SQL driver specified in the configuration
 
-Copyright 2014 - 2015 Gaël Stébenne (alias Wh1t3c0d3r)
+Copyright 2014 - 2019 Gaël Stébenne (alias Wh1t3c0d3r)
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -20,15 +20,13 @@ if (! DEFINED('INSCRIPT')) {echo 'Direct access denied'; exit(1);}
 
 // Check if driver exist and load it
 
-if (is_readable("sql/".$CONFIG['sql_drv'].".php")) { 
-	kernel_log("Loading SQL driver '".$CONFIG['sql_drv']."'");
-	include_once("sql/".$CONFIG['sql_drv'].".php");
-} elseif ($CONFIG['sql_drv'] == null) { kernel_log ("No SQL driver specified. SQL functions not available",4); 
+if (is_readable("sql/" . $CONFIG['sql_drv'] . ".php")) { 
+	kernel_log("Loading SQL driver '" . $CONFIG['sql_drv'] . "'");
+	include_once("sql/" . $CONFIG['sql_drv'] . ".php");
+	kernel_log("Driver loaded and module ready");
+} elseif ($CONFIG['sql_drv'] == null) {
+    kernel_log ("No SQL driver specified. SQL functions not available", 4); 
 } else {
-	kernel_log ("SQL driver '".$CONFIG['sql_drv']."' does not exist or is inaccessible. Please check config",1);
+	kernel_log ("SQL driver '" . $CONFIG['sql_drv'] . "' does not exist or is inaccessible. Please check config", 1);
 }
-
-kernel_log("Driver loaded and module ready");
-
-
 ?>

@@ -1,0 +1,42 @@
+<main role="main">
+
+  <div class="jumbotron">
+    <div class="container">
+      <h1 class="display-3">Framework configuration</h1>
+      <p>The list below shows the current configuration as it is set in the config.php file</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div>
+      <?php
+        if ($_SERVER['REMOTE_ADDR'] != '127.0.0.1' && $_SERVER['REMOTE_ADDR'] != '::1') {
+            echo 'For security reasons, this page is only available from localhost';
+        } else {
+            function printArray($array) {
+                static $indent = 0;
+                foreach ($array as $key => $value) {
+                    if (gettype($value) == 'array') {
+                        echo "<div style='margin:0 0 0 {$indent}em'>\r\n<p style='margin:0 0 0 {$indent}em'>";
+                        echo "[$key]: Array</p>\r\n";
+                        $indent++;
+                        printArray($value);
+                        echo "</div>\r\n";
+                        $indent--;
+                    } else {
+                        echo "<p style='margin:0 0 0 {$indent}em;'>";
+                        if (gettype($value) == 'boolean') {
+                            echo "[$key]: " . ($value ? 'true' : 'false') ."\r\n</p>\r\n";
+                        } else {
+                            echo "[$key]: $value</p>\r\n";
+                        }
+                    }
+                }
+            }
+            printArray($GLOBALS['CONFIG']);
+        }
+      ?>
+    </div>
+    <hr>
+  </div>
+</main>

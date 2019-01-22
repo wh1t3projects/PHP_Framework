@@ -2,7 +2,7 @@
 // Setup file. 
 /* Used for first-time use. Allow users to easly configure the framework.
 
-Copyright 2014 - 2015 Gaël Stébenne (alias Wh1t3c0d3r)
+Copyright 2014 - 2019 Gaël Stébenne (alias Wh1t3c0d3r)
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -23,13 +23,12 @@ if (file_exists('config.php')){ echo "A configuration file already exist.\r\nIf 
 if (file_exists('setup.active')) { $sesid = file_get_contents('setup.active');}
 if (isset ($sesid) and $sesid !== session_id() or isset ($_SESSION['ip']) and $_SESSION['ip'] !== $_SERVER['REMOTE_ADDR']) {
     echo "Setup is already running. If you want to restart the setup session, please delete the file 'setup.active'";
-} elseif (php_sapi_name() === 'cli') { // If ran from command line (used to setup a service or when we want to use the functions from a commande line)
+} elseif (php_sapi_name() === 'cli') { // If ran from command line (used to setup a service or when we want to use the functions from a command line)
     $DEFAULT_CONFIG['webroot'] = 'webroot';
     $DEFAULT_CONFIG['themes'] = 'themes';
     $DEFAULT_CONFIG['themes_css'] = 'css';
     $DEFAULT_CONFIG['themes_js'] = 'js';
     $DEFAULT_CONFIG['themes_img'] = 'img';
-    $DEFAULT_CONFIG['themes_mod'] = 'modules';
     $DEFAULT_CONFIG['themes_fromWebroot'] = 'theme';
     $DEFAULT_CONFIG['modules'] = 'modules';
     $DEFAULT_CONFIG['sql_user'] = '';
@@ -37,17 +36,20 @@ if (isset ($sesid) and $sesid !== session_id() or isset ($_SESSION['ip']) and $_
     $DEFAULT_CONFIG['sql_host'] = '';
     $DEFAULT_CONFIG['sql_db'] = '';
     $DEFAULT_CONFIG['sql_prefix'] = 'prefix_';
-    $DEFAULT_CONFIG['sql_drv'] = 'mysqli';
+    $DEFAULT_CONFIG['sql_drv'] = '';
     $DEFAULT_CONFIG['app_location'] = '/';
     $DEFAULT_CONFIG['app_real_location'] = getcwd();
     $DEFAULT_CONFIG['default_document'] = 'index';
+    $DEFAULT_CONFIG['documents_extension'] = 'html';
     $DEFAULT_CONFIG['theme'] = 'default';
+    $DEFAULT_CONFIG['theme_checkVersion'] = false;
     $DEFAULT_CONFIG['lang'] = 'en';
     $DEFAULT_CONFIG['timezone'] = date_default_timezone_get();
     $DEFAULT_CONFIG['allowed_file_ext'] = '';
     $DEFAULT_CONFIG['debug'] = "true";
     $DEFAULT_CONFIG['debug_file'] = '/debug.log';
     $DEFAULT_CONFIG['debug_level'] = "4";
+    $DEFAULT_CONFIG['debug_output_level'] = "4";
     $DEFAULT_CONFIG['debug_panic'] = "true";
     $config = "<?php
 if (! DEFINED('INSCRIPT')) {echo 'Direct access denied'; exit(1);}\r\n";
@@ -69,7 +71,7 @@ if (! DEFINED('INSCRIPT')) {echo 'Direct access denied'; exit(1);}\r\n";
         if (file_put_contents('config.php',$config) === false){
             die( 'An error as occured while saving the configuration. Please check the permissions and try again');
         }
-        echo "The coonfiguration file has been created with the default values.\r\nPlease check it to make sure everything is OK\r\n";
+        echo "The configuration file has been created with the default values.\r\nPlease check it to make sure everything is OK\r\n";
 } else {
 
     echo <<<HEAD
@@ -258,7 +260,6 @@ HEAD;
             $_SESSION['themes_css'] = 'css';
             $_SESSION['themes_js'] = 'js';
             $_SESSION['themes_img'] = 'img';
-            $_SESSION['themes_mod'] = 'modules';
             $_SESSION['themes_fromWebroot'] = 'theme';
             $_SESSION['modules'] = 'modules';
             $_SESSION['sql_user'] = '';
@@ -270,13 +271,16 @@ HEAD;
             $_SESSION['app_location'] = substr($_SERVER['REQUEST_URI'], 0, -9);
             $_SESSION['app_real_location'] = getcwd();
             $_SESSION['default_document'] = 'index';
+            $_SESSION['documents_extension'] = 'html';
             $_SESSION['theme'] = 'default';
+            $_SESSION['theme_checkVersion'] = 'true';
             $_SESSION['lang'] = 'en';
             $_SESSION['timezone'] = date_default_timezone_get();
             $_SESSION['allowed_file_ext'] = 'jpg;gif;png;txt';
             $_SESSION['debug'] = "false";
             $_SESSION['debug_file'] = '/debug.log';
-            $_SESSION['debug_level'] = "0";
+            $_SESSION['debug_level'] = "4";
+            $_SESSION['debug_output_level'] = "0";
             $_SESSION['debug_panic'] = "true";
             $_SESSION['isactive'] = true;
             
@@ -287,7 +291,6 @@ HEAD;
             $_SESSION['themes_css'] = $_POST['themes_css'];
             $_SESSION['themes_js'] = $_POST['themes_js'];
             $_SESSION['themes_img'] = $_POST['themes_img'];
-            $_SESSION['themes_mod'] = $_POST['themes_mod'];
             $_SESSION['modules'] = $_POST['modules'];
             $_SESSION['sql_user'] = $_POST['sql_user'];
             $_SESSION['sql_pass'] = $_POST['sql_pass'];
@@ -298,13 +301,16 @@ HEAD;
             $_SESSION['app_location'] = $_POST['app_location'];
             $_SESSION['app_real_location'] = $_POST['app_real_location'];
             $_SESSION['default_document'] = $_POST['default_document'];
+            $_SESSION['documents_extension'] = $_POST['documents_extension'];
             $_SESSION['theme'] = $_POST['theme'];
+            $_SESSION['theme_checkVersion'] = $_POST['theme_checkVersion'];
             $_SESSION['lang'] = $_POST['lang'];
             $_SESSION['timezone'] = $_POST['timezone'];
             $_SESSION['allowed_file_ext'] = $_POST['allowed_file_ext'];
             $_SESSION['debug'] = $_POST['debug'];
             $_SESSION['debug_file'] = $_POST['debug_file'];
             $_SESSION['debug_level'] = $_POST['debug_level'];
+            $_SESSION['debug_output_level'] = $_POST['debug_output_level'];
             $_SESSION['debug_panic'] = $_POST['debug_panic'];
         }
         echo '
@@ -313,8 +319,8 @@ HEAD;
         if (isset ($_POST['debug_file'])) {
             // Check required settings
             $error = false;
-            if ($_SESSION['webroot'] == null or $_SESSION['themes'] == null or $_SESSION['themes_css'] == null or $_SESSION['themes_js'] == null or $_SESSION['themes_img'] == null or $_SESSION['themes_mod'] == null or $_SESSION['modules'] == null or $_SESSION['app_location'] == null or $_SESSION['app_real_location'] == null or $_SESSION['theme'] == null or $_SESSION['lang'] == null or $_SESSION['timezone'] == null or $_SESSION['allowed_file_ext'] == null or $_SESSION['debug'] == null or $_SESSION['debug_file'] == null) { $error = true;}
-            if (!is_dir ($_SESSION['app_real_location']) or !is_dir ($_SESSION['app_real_location'].'/'.$_SESSION['webroot']) or !is_dir ($_SESSION['app_real_location'].'/'.$_SESSION['themes']) or !is_dir ($_SESSION['app_real_location'].'/'.$_SESSION['themes'].'/'.$_SESSION['theme'].'/'.$_SESSION['themes_css']) or !is_dir ($_SESSION['app_real_location'].'/'.$_SESSION['themes'].'/'.$_SESSION['theme'].'/'.$_SESSION['themes_js']) or !is_dir ($_SESSION['app_real_location'].'/'.$_SESSION['themes'].'/'.$_SESSION['theme'].'/'.$_SESSION['themes_js']) or !is_dir ($_SESSION['app_real_location'].'/'.$_SESSION['themes'].'/'.$_SESSION['theme'].'/'.$_SESSION['themes_img']) or !is_dir ($_SESSION['app_real_location'].'/'.$_SESSION['themes'].'/'.$_SESSION['theme'].'/'.$_SESSION['themes_mod']) or !is_dir ($_SESSION['app_real_location'].'/'.$_SESSION['modules'])) { $error = true;}
+            if ($_SESSION['webroot'] == null or $_SESSION['themes'] == null or $_SESSION['themes_css'] == null or $_SESSION['themes_js'] == null or $_SESSION['themes_img'] == null or $_SESSION['modules'] == null or $_SESSION['app_location'] == null or $_SESSION['app_real_location'] == null or $_SESSION['theme'] == null or $_SESSION['lang'] == null or $_SESSION['timezone'] == null or $_SESSION['allowed_file_ext'] == null or $_SESSION['debug'] == null or $_SESSION['debug_file'] == null) { $error = true;}
+            if (!is_dir ($_SESSION['app_real_location']) or !is_dir ($_SESSION['app_real_location'].'/'.$_SESSION['webroot']) or !is_dir ($_SESSION['app_real_location'].'/'.$_SESSION['themes']) or !is_dir ($_SESSION['app_real_location'].'/'.$_SESSION['themes'].'/'.$_SESSION['theme'].'/'.$_SESSION['themes_css']) or !is_dir ($_SESSION['app_real_location'].'/'.$_SESSION['themes'].'/'.$_SESSION['theme'].'/'.$_SESSION['themes_js']) or !is_dir ($_SESSION['app_real_location'].'/'.$_SESSION['themes'].'/'.$_SESSION['theme'].'/'.$_SESSION['themes_js']) or !is_dir ($_SESSION['app_real_location'].'/'.$_SESSION['themes'].'/'.$_SESSION['theme'].'/'.$_SESSION['themes_img']) or !is_dir ($_SESSION['app_real_location'].'/'.$_SESSION['modules'])) { $error = true;}
             if ($_SESSION['debug_level'] < 0 or $_SESSION['debug_level'] > 4) { $error = true;}
             if ($error == true) {
                 echo '<center><div class="error">One or more settings are using a bad or missing value</div></center>';
@@ -323,7 +329,7 @@ HEAD;
 if (! DEFINED('INSCRIPT')) {echo 'Direct access denied'; exit(1);}\r\n";
                 foreach($_SESSION as $key=>$item) {
                     if ($key == 'ip' or $key == 'isactive') {} else {
-                        if ($key === 'debug' or $key === 'debug_panic' or $key === 'debug_level') {
+                        if ($key === 'debug' or $key === 'debug_panic' or $key === 'debug_level' or $key === 'debug_output_level') {
                             $config .= "\$CONFIG['$key'] = $item;\r\n";
                         } elseif ($key === 'allowed_file_ext') {
                             $item = explode(';',$item);
@@ -382,7 +388,7 @@ RewriteRule ^(.*) index.php';
                     <center><div class="info">If you don\'t plan to use SQL, you can leave the defaults</div></center>
                         
                         <tr>
-                            <td class="right">What is the SQL host name?</td>
+                            <td class="right">What is the SQL server host name or address?</td>
                             <td><input name="sql_host" type="text" class="input" placeholder="Optional" value="'.$_SESSION['sql_host'].'"></td>
                         </tr>
                         <tr>
@@ -441,6 +447,10 @@ echo '        </select><em>Those are the currently available drivers. If you wan
                             <td><input name="default_document" type="text" class="input" value="'.$_SESSION['default_document'].'"></td>
                         </tr>
                         <tr>
+                            <td class="right">What is the extension of all the documents to execute in webroot?</td>
+                            <td><input name="documents_extension" type="text" class="input" value="'.$_SESSION['documents_extension'].'"></td>
+                        </tr>
+                        <tr>
                             <td class="right">What is the ISO 639-1 language code?</td>
                             <td><input name="lang" type="text" class="input" value="'.$_SESSION['lang'].'"></td>
                         </tr>
@@ -461,6 +471,14 @@ echo '        </select><em>Those are the currently available drivers. If you wan
                     <center><div class="warning">Those folders are relative to the \'themes\' folder setting except the last one</div></center>
                     <table>
                         <tr>
+                            <td class="right">Check if the theme is compatible with the current version of the Framework?</td>';
+        if ($_SESSION['theme_checkVersion'] === "true") {
+            echo '                            <td><input name="theme_checkVersion" type="radio" value=true checked><span class="yn" enabled>Yes</span><input type="radio" name="theme_checkVersion" value=false>No</td>';
+        } else {
+            echo '                            <td><input name="theme_checkVersion" type="radio" value=true><span class="yn" enabled>Yes</span><input type="radio" name="theme_checkVersion" value=false checked>No</td>';
+        }
+echo '                        </tr>
+                        <tr>
                             <td class="right">What is the folder that hold the css files?</td>
                             <td><input name="themes_css" type="text" class="input" value="'.$_SESSION['themes_css'].'"></td>
                         </tr>
@@ -471,10 +489,6 @@ echo '        </select><em>Those are the currently available drivers. If you wan
                         <tr>
                             <td class="right">What is the folder that hold the image files?</td>
                             <td><input name="themes_img" type="text" class="input" value="'.$_SESSION['themes_img'].'"></td>
-                        </tr>
-                        <tr>
-                            <td class="right">What is the folder that hold the modules theme files?</td>
-                            <td><input name="themes_mod" type="text" class="input" value="'.$_SESSION['themes_mod'].'"></td>
                         </tr>
                         <tr>
                             <td class="right">What is the public folder that refer to the theme?</td>
@@ -494,7 +508,7 @@ echo '        </select><em>Those are the currently available drivers. If you wan
         }
         echo '                        </tr>
                         <tr>
-                            <td class="right">If debug is enabled, which file is used for storing the log?</td>
+                            <td class="right">When debugging is enabled, which file is used for storing the log? (root is the framework\'s root)</td>
                             <td><input name="debug_file" type="text" class="input" value="'.$_SESSION['debug_file'].'"></td>
                         </tr>
                         <tr>
@@ -507,8 +521,28 @@ echo '        </select><em>Those are the currently available drivers. If you wan
         echo '                        </tr>
                         
                         <tr>
-                            <td class="right">If debug is enabled, which level of debugging do you want to show?</td>
-                            <td><input name="debug_level" type="number" class="" style="width: 40px" min="0" max="4" step="1" value="'.$_SESSION['debug_level'].'"></td>
+                            <td class="right">When debugging is enabled, what do you want to show?</td>
+                            <td>
+                                <select name="debug_output_level">
+                                    <option '. (($_SESSION['debug_output_level'] == 0) ? 'selected':'').' value="0">(0) Nothing</value>
+                                    <option '. (($_SESSION['debug_output_level'] == 1) ? 'selected':'').' value="1">(1) Fatal errors only</value>
+                                    <option '. (($_SESSION['debug_output_level'] == 2) ? 'selected':'').' value="2">(2) Critical errors</value>
+                                    <option '. (($_SESSION['debug_output_level'] == 3) ? 'selected':'').' value="3">(3) Warnings and errors</value>
+                                    <option '. (($_SESSION['debug_output_level'] == 4) ? 'selected':'').' value="4">(4) Everything (verbose)</value>
+                                </select>
+                            
+                        </tr>
+                        <tr>
+                            <td class="right">When debugging is enabled, what do you want to send to the log?</td>
+                            <td>
+                                <select name="debug_level">
+                                    <option '. (($_SESSION['debug_level'] == 0) ? 'selected':'').' value="0">(0) Nothing</value>
+                                    <option '. (($_SESSION['debug_level'] == 1) ? 'selected':'').' value="1">(1) Fatal errors only</value>
+                                    <option '. (($_SESSION['debug_level'] == 2) ? 'selected':'').' value="2">(2) Critical errors</value>
+                                    <option '. (($_SESSION['debug_level'] == 3) ? 'selected':'').' value="3">(3) Warnings and errors</value>
+                                    <option '. (($_SESSION['debug_level'] == 4) ? 'selected':'').' value="4">(4) Everything (verbose)</value>
+                                </select>
+                            </td>
                         </tr>
                     </table>
                     

@@ -2,7 +2,7 @@
 // Kernel "Protected" module
 /* Small library for protecting data from other scripts.
 
-Copyright 2014 - 2015 Gaël Stébenne (alias Wh1t3c0d3r)
+Copyright 2014 - 2019 Gaël Stébenne (alias Wh1t3c0d3r)
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -18,22 +18,33 @@ Copyright 2014 - 2015 Gaël Stébenne (alias Wh1t3c0d3r)
 */
 if (! DEFINED('INSCRIPT')) {echo 'Direct access denied'; exit(1);}
 
-function kernel_protected_var($var1,$var2 = "") {
-	if ($var1 == "") {kernel_log("No argument or empty value when calling 'kernel_protected_var'",3); return;}
-	$return = null;
+function kernel_protected_var($varName, $varData = "") {
+	if ($varName == null) {
+        kernel_log("No argument or empty value when calling 'kernel_protected_var'",3);
+        return;
+    }
+    if (gettype($varName) != 'string') {
+        kernel_log('Invalid argument type for \'kernel_protected_var\'', 3);
+    }
 	static $DATA = array();
 	$callinfo = debug_backtrace();
 	$file = $callinfo[0]['file'];
-	
-	if ($var2 === "") {
-		if (isset ($DATA["$file"]["$var1"])) {$return = $DATA["$file"]["$var1"];
-		} else { kernel_log("Undefined variable: $var1 in $file on line ".$callinfo[0]['line'],4);}
+	if ($varData === "") {
+		if (isset ($DATA[$file][$varName])) {
+            return $DATA[$file][$varName];
+		} else { 
+            kernel_log("Undefined variable: $varName in $file on line ".$callinfo[0]['line'],4);
+            return null;
+        }
 	} else {
-		if ($var2 === null) {unset ($DATA["$file"]["$var1"]);
-		} else { $DATA["$file"]["$var1"] = $var2;}
+		if ($varData === null) {
+            unset ($DATA["$file"]["$varName"]);
+            return true;
+		} else { 
+            $DATA["$file"]["$varName"] = $varData;
+            return true;
+        }
 	}
-	
-	return $return;
 }
 kernel_log("Module ready");
 ?>

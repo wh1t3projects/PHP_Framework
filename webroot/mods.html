@@ -1,0 +1,30 @@
+<main role="main">
+
+  <div class="jumbotron">
+    <div class="container">
+      <h1 class="display-3">Installed modules</h1>
+      <p>The list below shows the currently installed modules</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div>
+      <?php
+        if ($_SERVER['REMOTE_ADDR'] != '127.0.0.1' && $_SERVER['REMOTE_ADDR'] != '::1') {
+            echo 'For security reasons, this page is only available from localhost';
+        } else {
+            if (count($GLOBALS['INFO']['modules']) > 0) {
+                foreach ($GLOBALS['INFO']['modules'] as $module) {
+                    echo "<p style='margin: 0'>$module</p>\r\n";
+                }
+                echo '<br/><div><a href="https://github.com/wh1t3projects/PHP_Framework/wiki/modules"><i class="fas fa-plus"></i> Get more modules</a></div>' . "\r\n";
+            } else {
+                echo '<p>No module installed</p>';
+                echo '<div><a href="https://github.com/wh1t3projects/PHP_Framework/wiki/modules"><i class="fas fa-plus"></i> Get modules</a></div>' . "\r\n";
+            }
+        }
+      ?>
+    </div>
+    <hr>
+  </div>
+</main>

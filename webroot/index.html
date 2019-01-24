@@ -6,7 +6,7 @@
       <p>Contratulation! You've successfully setup the Framework and you're now ready to build your awesome web application (or website)!<br/>
          If you haven't done already, you can now install your modules into the <strong><?php echo $GLOBALS['CONFIG']['modules'];?></strong> directory or start writing your own.</p>
         <p>To learn more about writing modules or to get started on making your web application, please take a look at the documentation.</p>
-      <p><?php echo theme_button('Get Started &raquo;');?></p>
+      <p><?php echo theme_button('Get Started &raquo;', 'https://wh1t3projects.github.io/PHP_Framework/quickstart/Home');?></p>
     </div>
   </div>
 
@@ -15,17 +15,17 @@
       <div class="col-md-4">
         <h2>Themes</h2>
         <p>Themes enables you to change the appearance of your web application or website in a matter of seconds, by changing only one setting</p>
-        <p><?php echo theme_button_secondary('Learn more &raquo;');?></p>
+        <p><?php echo theme_button_secondary('Learn more &raquo;', 'https://wh1t3projects.github.io/PHP_Framework/theme/Home');?></p>
       </div>
       <div class="col-md-4">
         <h2>Customizations</h2>
         <p>The Framework can be extensively customized, depending on your needs, by modifying its configuration. And if something is missing, be sure to open an issue on GitHub so we can add it!<br/>You can click the button below to view your current configuration</p>
-        <p><?php echo theme_button_secondary('View config &raquo;','config');?>&nbsp;<?php echo theme_button_secondary('Learn more &raquo;');?></p>
+        <p><?php echo theme_button_secondary('View config &raquo;', 'config');?>&nbsp;<?php echo theme_button_secondary('Learn more &raquo;','https://wh1t3projects.github.io/PHP_Framework/config');?></p>
       </div>
       <div class="col-md-4">
         <h2>Modules</h2>
         <p>Modules enables you to extend the Framework's features by adding libraries and small web applications.</p>
-        <p><a class="btn btn-secondary" href="#" role="button">View details &raquo;</a></p>
+        <p><?php echo theme_button_secondary('View details &raquo', 'https://wh1t3projects.github.io/PHP_Framework/modules/Home'); ?></p>
       </div>
     </div>
     <hr>

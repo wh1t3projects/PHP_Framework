@@ -36,10 +36,10 @@ Copyright 2014 - 2019 Gaël Stébenne (alias Wh1t3c0d3r)
             echo theme_navbar_item('Configuration', '/config');
             echo theme_navbar_item('Modules', '/mods');
             echo theme_navbar_dropdown('Documentation', array(
-    'Home' => 'https://github.com/wh1t3projects/PHP_Framework/wiki',
-    'Getting started' => 'https://github.com/wh1t3projects/PHP_Framework/wiki/quickstart',
-    'Modules' => 'https://github.com/wh1t3projects/PHP_Framework/wiki/modules',
-    'Themes' => 'https://github.com/wh1t3projects/PHP_Framework/wiki/theme'
+    'Home' => 'https://wh1t3projects.github.io/PHP_Framework',
+    'Getting started' => 'https://wh1t3projects.github.io/PHP_Framework/quickstart/Home',
+    'Modules' => 'https://wh1t3projects.github.io/PHP_Framework/modules/Home',
+    'Themes' => 'https://wh1t3projects.github.io/PHP_Framework/theme/Home'
             )); ?>
     </ul>
   </div>

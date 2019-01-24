@@ -1,0 +1,1 @@
+This function is an alias of [kernel_checkIfModuleIsValid](./kernel_checkIfModuleIsValid)

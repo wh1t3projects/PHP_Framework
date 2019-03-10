@@ -14,7 +14,11 @@ If a module requires some configuration or additional installation steps, these 
 These modules are officially supported and trusted by the Wh1t3projects Group. Support is provided via the forum and their respective issue tracker. Help for third-party modules may be provided via different means. Please look at the *README* file accompanying each module for more information.
 
 #### Wh1t3projects' modules
-None yet. A few modules are currently planned to be released soon!
+##### [WebAPI](https://github.com/wh1t3projects/WebAPI)<br/>
+This module enable developers to easily implement an API in their web application. It is easy to install and use.<br/>
+<br/>
+
+More are on the way and are planned to be released soon!
 
 #### Third-party modules
 None yet. Please send us an email if you would like to see your module added here.

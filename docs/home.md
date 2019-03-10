@@ -9,4 +9,6 @@ Categories:<br/>
 [Modules](modules/Home)<br/>
 [Theme](theme/Home)<br/>
 
-Current official Framework version: 2.0
+For a full list of available settings in `config.php`, please see the [configuration list](./config)<br/>
+
+Current official Framework version: 2.1

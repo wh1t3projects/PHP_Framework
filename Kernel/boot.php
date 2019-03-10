@@ -111,7 +111,18 @@ function kernel_log($message = null, $messageLevel = 5) {
                 if (COREDEBUG or php_sapi_name() === 'cli' and !isset($callInfo[1]['file'])) {
                     $location = "{$callInfo[0]['file']}:{$callInfo[0]['line']}";
                 } else {
-                    $location = "{$callInfo[1]['file']}:{$callInfo[1]['line']}";
+                    foreach ($callInfo as $item) {
+                        if (! isset($item['file'])) {
+                            continue;
+                        }
+                        if (strpos (str_replace('\\', '/', $item['file']), $GLOBALS['CONFIG']['app_real_location'] . '/Kernel') === FALSE) {
+                            $location = "{$item['file']}:{$item['line']}";
+                            break;
+                        }
+                    }
+                    if (!isset($location)) {
+                        $location = 'Unknown';
+                    }
                 }
             } else if (strpos ($file, $GLOBALS['CONFIG']['app_real_location'] . '/' . $GLOBALS['CONFIG']['themes']) === 0) {
                 $prefix = $GLOBALS['CONFIG']['theme'] . ' THEME';
@@ -226,7 +237,7 @@ function kernel_getCallerModule() {
     $callInfo = debug_backtrace();
     $file = $callInfo[1]['file'];
     $file = str_replace ("\\", "/", $file);
-    preg_match('/(?<='.$GLOBALS['CONFIG']['modules'] . '\/).*?(?=\/)/', $file, $module);
+    preg_match('/(?<='.$GLOBALS['CONFIG']['modules'].'\/).*?(?=\/)/', $file, $module);
     if (! isset($module[0]) or $module[0] == null) {
         return false;
     } else {
@@ -237,7 +248,7 @@ function kernel_getModuleRealPath() {
     $callInfo = debug_backtrace();
     $file = $callInfo[0]['file'];
     $file = str_replace ("\\", "/", $file);
-    preg_match('/.*(?<='.$GLOBALS['CONFIG']['modules'] . '\/).*?(?=\/)/', $file, $module);
+    preg_match('/.*(?<='.$GLOBALS['CONFIG']['modules'].'\/).*?(?=\/)/', $file, $module);
     if (! isset($module[0]) or $module[0] == null) {
         return false;
     } else {

@@ -32,15 +32,12 @@ function kernel_override_url ($URL = null, $pathToScript = null, $mode = 2){
         kernel_log('Missing argument for "kernel_override_url"', 3);
         return false;
     }
-	$script = $GLOBALS['CONFIG']['app_real_location'] . '/' . $GLOBALS['CONFIG']['modules'] . '/' . kernel_getCallerModule() . '/' . $pathToScript;
-	if (! isset ($DATA['URL'])) {
-        $DATA['URL'] = array();
-        $DATA['SCRIPT'] = array();
-        $DATA['SCRIPTNAME'] = array();
-        $DATA['TYPE'] = array();
-    }
-	if (! is_readable($script)) {
+	if (($script = realpath(dirname($file) . '/' . $pathToScript)) === FALSE) {
         kernel_log("File '$pathToScript' does not exist or is inaccessible",3);
+        return false;
+    }
+    if (strpos(str_replace('\\', '/', $script), $GLOBALS['CONFIG']['app_real_location'] . '/' . $GLOBALS['CONFIG']['modules'] . '/' . kernel_getCallerModule() . '/') !== 0) {
+        kernel_log('Attempt to register script outside of module\'s directory', 3);
         return false;
     }
 	if ($mode != 1 and $mode != 2) {
@@ -53,16 +50,18 @@ function kernel_override_url ($URL = null, $pathToScript = null, $mode = 2){
 	if ($URL[strlen($URL) - 1] == "/") {
         $URL = substr($URL,0,-1);
     }
-	foreach ($DATA['URL'] as $i) {
-        if ($URL == $i) {
-            kernel_log("Attempt to register an already registered URL '$i'. Request ignored.", 3);
+	foreach ($DATA as $i) {
+        if ($URL == $i['URL']) {
+            kernel_log("Attempt to register an already registered URL '{$i['URL']}'. Request ignored.", 3);
             return false;
         } 
-    } 
-	array_push($DATA['URL'], $URL);
-	array_push($DATA['SCRIPT'], $script);
-	array_push($DATA['TYPE'], $mode);
-	array_push($DATA['SCRIPTNAME'], $pathToScript);
+    }
+    $newOverride = array();
+	$newOverride['URL'] = $URL;
+	$newOverride['SCRIPT'] = $script;
+	$newOverride['TYPE'] = $mode;
+	$newOverride['SCRIPTNAME'] = $pathToScript;
+    $DATA[] = $newOverride;
 	$log = "Script '$pathToScript' registered with URL '$URL' using ";
 	switch ($mode) {
 		case 1:

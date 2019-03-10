@@ -19,7 +19,7 @@ Copyright 2014 - 2019 Gaël Stébenne (alias Wh1t3c0d3r)
 
 
 DEFINE ('INSCRIPT',"1");
-DEFINE ('framework_version','2.0');
+DEFINE ('framework_version','2.1');
 ob_start();
 if (file_exists('config.php')) {require_once 'config.php';} else {echo 'Can\'t find config.php. Please run <a href="setup.php">setup.php</a>';exit(1);} // Config file
 error_reporting(E_ALL);
@@ -150,32 +150,31 @@ if ($INFO['web_location'] === 'cli') {
     kernel_log("WEB-URL: ". $TEMP['docpath']);
 }
 $overrideInfo = kernel_override_url();
-while (true) {
-	static $i = 0;
-	if (! isset ($overrideInfo['TYPE'][$i])) {
-        __render_page();
-        unset ($overrideInfo);
-        break;
-    }
-		if ($overrideInfo['TYPE'][$i] === 2) {
-			if ($TEMP['docpath'] === $overrideInfo['URL'][$i]) {
-                kernel_log("Executing script " . $overrideInfo['SCRIPTNAME'][$i] . " with URL " . $overrideInfo['URL'][$i] . " using explicit mode");
-                include_once $overrideInfo['SCRIPT'][$i];
+$renderPage = true;
+foreach ($overrideInfo as $override) {
+		if ($override['TYPE'] === 2) {
+			if ($TEMP['docpath'] === $override['URL']) {
+                kernel_log("Executing script " . $override['SCRIPTNAME'] . " with URL " . $override['URL'] . " using explicit mode");
                 unset ($overrideInfo);
+                $renderPage = false;
+                include_once $override['SCRIPT'];
                 break;
             }
-		} elseif($overrideInfo['TYPE'][$i] === 1) {
-			if (substr($TEMP['docpath'] . "/", 0, strlen($overrideInfo['URL'][$i] . "/")) === $overrideInfo['URL'][$i] . "/") {
-                kernel_log("Executing script " . $overrideInfo['SCRIPTNAME'][$i] . " with URL " . $overrideInfo['URL'][$i] . " using normal mode");
-                $overrideInfo['URL'][$i];
-                include_once $overrideInfo['SCRIPT'][$i];
+		} elseif ($override['TYPE'] === 1) {
+			if (substr($TEMP['docpath'] . "/", 0, strlen($override['URL'] . "/")) === $override['URL'] . "/") {
+                kernel_log("Executing script " . $override['SCRIPTNAME'] . " with URL " . $override['URL'] . " using normal mode");
+                $override['URL'];
+                $renderPage = false;
                 unset ($overrideInfo);
+                include_once $override['SCRIPT'];
                 break;
             }
 		}
-	$i++;
 }
-
+unset ($overrideInfo);
+if ($renderPage) {
+    __render_page();
+}
 function __render_page () {
     if (php_sapi_name() !== 'cli') {
     	include ("docname.inc.php");

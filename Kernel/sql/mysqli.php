@@ -218,7 +218,7 @@ function SQL_select($columnName, $tableName, $whereColumnName = null, $whereValu
         kernel_log ('An error occurred while executing a SELECT query. Please check log for details', 3); 
         return false;
     } else { 
-        $return = $result;
+        return $result;
     }
 }
 

@@ -1,9 +1,9 @@
-**IMPORTANT**: Big changes are planned for this summer. In order to provide more features, as well as fixing some issues and making the framework more extensible, it will be entirely rewritten, from scratch.<br/>
+**IMPORTANT**: Big changes are being made. In order to provide more features, as well as fixing some (big) issues inherent to the framework's architecture and making it more extensible, it is being entirely rewritten, from scratch.<br/>
 
-The same working principles will be kept, but the way the framework works, as well as the provided functions, will change. Current projects using this framework may cease to work properly. <br/>
-In order to prevent unexpected issues when attempting to update current projects to the new version, a new repository will most likely be created and this one, archived.<br/>
+The same working principles and concepts will be kept, but the way the framework works, as well as the provided functions (and features), will change. Current projects using this framework will likely cease to work completely and will need to be updated.<br/>
+In order to prevent unexpected issues when attempting to update current projects using this framework, a new repository will be created and this one, archived.<br/>
 
-More details to come as I work out the exact details.
+More details to come as the project advances. No release date has been determined yet, but will eventually be announced once it enters the Open Beta phase (currently in Closed Alpha).
 <br/><br/>
 
 Wh1t3projects PHP Framework
